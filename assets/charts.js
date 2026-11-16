@@ -58,7 +58,7 @@ function drawChart(canvas, spec) {
   const datasets = series.map((s, i) => line
     ? { label: s.name, data: s.data, borderColor: SERIES[i], backgroundColor: SERIES[i], borderWidth: 2, cubicInterpolationMode: "monotone", spanGaps: true,
         pointRadius: spec.labels.length > 40 ? 0 : 2.5, pointHoverRadius: 5, pointBackgroundColor: SERIES[i], pointBorderColor: "#fff", pointBorderWidth: 1.5 }
-    : { label: s.name, data: s.data, backgroundColor: SERIES[i], borderColor: "#fff", borderWidth: type === "stacked" ? 1 : 0,
+    : { label: s.name, data: s.data, backgroundColor: spec.emphasis === "last" ? s.data.map((_, k) => (k === s.data.length - 1 ? SERIES[0] : "#b9c6dc")) : SERIES[i], borderColor: "#fff", borderWidth: type === "stacked" ? 1 : 0,
         borderRadius: type === "stacked" ? 0 : 4, borderSkipped: "start", maxBarThickness: 30, categoryPercentage: 0.75, barPercentage: many ? 0.9 : 0.8 });
   canvas.parentElement.style.height = (horizontal ? Math.max(220, spec.labels.length * (many ? 16 * series.length + 14 : 30) + 70) : 320) + "px";
   return new Chart(canvas, { type: line ? "line" : "bar", data: { labels: spec.labels, datasets }, options, plugins: [whiteBackground] });

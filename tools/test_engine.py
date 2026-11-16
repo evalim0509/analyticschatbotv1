@@ -45,5 +45,11 @@ assert len(call("ml_run", kind="segments", spec={"dataset": ID["Customers"]})["g
 assert call("ml_run", kind="unusual", spec={"dataset": ID["Orders"]})["table"]["rows"]
 call("set_glossary", entries=[{"term": "takings", "means": "Sales Amount"}])
 assert call("ask", question="total takings")["type"] == "number"
+o = call("story_options"); assert o["options"][0]["label"] == "Sales Amount", o
+s5 = call("story_build", spec={"dataset": o["options"][0]["dataset"], "value": "Sales Amount"})
+assert [c["key"] for c in s5["cards"]] == ["what", "who", "when", "which", "how"] and all(c["sentence"] for c in s5["cards"])
+assert s5["period"] == "quarter" and "target" in " ".join(s5["cards"][0]["more"]) and s5["cards"][4]["actions"]
+n = call("story_build", spec={"dataset": o["options"][0]["dataset"], "value": None, "period": "month", "filters": [{"field": "Region", "op": "is", "value": ["North"]}]})
+assert "Region" not in n["cards"][3]["dims"] and "North" in n["title"]
 call("restore", dataset=ID["Orders"]); assert call("state")["datasets"][0]["rows"] == 1783
 print("All engine checks passed.")

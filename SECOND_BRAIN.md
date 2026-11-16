@@ -12,7 +12,7 @@ How it is used:
 - **The app reads the "Business words" table** below when it starts, so the
   chatbot understands the business's own vocabulary.
 
-Last updated: 2026-11-15
+Last updated: 2026-11-16
 
 ## Purpose
 
@@ -79,10 +79,40 @@ Recorded from the project owner. Newest entries at the bottom of each group.
 - R17. This file acts as the second brain and is updated continuously.
 - R18. Dummy data is included to test all three tabs.
 
+### Story-first redesign (branch `claude/story-cards`, 2026-11-16)
+- R19. Redefine the BI dashboard: no charts and tables at first glance. The main
+  screen is five cards: What, Who, When, Which, How.
+- R20. Each card expands into data in a fixed order: sentence first, then chart,
+  then table.
+- R21. Story driven, not chatbot driven. The five cards alone let the reader
+  understand what is happening, in sequence.
+- R22. Audience is upper management: not technical, wants quick insight and a
+  decision.
+- R23. Clean, story focused, generous whitespace, no clutter.
+- R24. Card meanings: What happened (headline number and its change), Who is
+  behind it, When (trend over time), Which ones matter most (ranking), How to
+  respond (suggested next steps from fixed rules, not AI).
+- R25. After upload the user picks the subject first ("What do you want to
+  understand?"), then the story is built.
+- R26. Cards are stacked vertically and only one is open at a time.
+- R27. Headline numbers are compared with the previous period, the same period
+  last year, and a target or budget when the files contain one.
+- R28. The story can be printed as a briefing, copied as text, and narrowed with
+  one filter that re-tells all five cards.
+- R29. The data check still runs after upload. Ask, Tables & charts and
+  Predictions stay available behind one quiet "Explore further" control.
+- R30. Look: editorial briefing. Light background, large sentences as the main
+  visual, one restrained accent colour, few lines and boxes.
+
 ## Business knowledge
 
-Facts about the business, its data and its rules. Nothing recorded yet beyond
-the sample data. Add things like: what each file contains, how figures are
+- Main uses are **sales and customers** (revenue, orders, customers, products,
+  regions, targets) and **finance** (costs, budgets against actuals, margins).
+- Readers are upper management who want a quick read and a decision, not analysis.
+- For cost-like numbers (cost, expense, spend) a rise is the concern; for
+  sales-like numbers a fall is the concern. The story's suggested steps follow this.
+
+Nothing else recorded yet beyond the sample data. Add things like: what each file contains, how figures are
 defined (for example "revenue excludes refunds"), reporting periods, thresholds
 that matter, who uses the output.
 
@@ -99,12 +129,22 @@ that matter, who uses the output.
 | 2026-11-15 | SQL is hidden behind a "Technical detail" disclosure inside "How I got this". | Users never need SQL, but an analyst can still verify an answer. |
 | 2026-11-15 | Charts follow one consistent style; no dual axes; at most 8 colours. | Readability for non-analysts. |
 
+| 2026-11-16 | Story branch: the first screen after import asks "What do you want to understand?" and offers up to five subjects. | Owner's choice (R25). |
+| 2026-11-16 | Story branch: default period is the latest complete quarter; the latest month and the latest 12 months are one click away. Incomplete final months are left out. | Quarters suit management reporting; partial months mislead. |
+| 2026-11-16 | Story branch: one "Apply them all" button accepts high-confidence fixes and high-confidence table links before the story. Lower-confidence items are flagged at the top of the story and as step 1 of How, never applied silently. | Executives should not have to tidy data, but accuracy must not be hidden. |
+| 2026-11-16 | Story branch: a target or budget is found automatically when a small table has a number field named target, budget, plan, goal or quota and shares a field with the main table. Annual targets are compared with year-to-date pace. | R27, without asking the user to configure anything. |
+| 2026-11-16 | Story branch: "How" steps come from fixed rules (open data issues, distance from target, biggest fall and rise, 40%+ reliance on one group, 3-month forecast). | R24 and the no-AI rule. |
+| 2026-11-16 | Story branch: sentences use rounded figures (188K, 1.52M); tables show exact figures. | Quick reading without losing auditability. |
+| 2026-11-16 | Story branch: accent colour changed from green to ink blue, with a serif face (Source Serif 4) for sentences. | R30. |
+
 ## Open questions
 
 - Should imported data be remembered between visits (stored in the browser), or
   always start fresh? Currently always fresh.
 - Largest file size the business expects? The browser engine is comfortable up
   to roughly a few hundred thousand rows.
+- Story branch: should it replace the original version (merge), or stay a separate variant?
+- Does the business use calendar quarters, or a fiscal year that starts in another month?
 - Are there fixed business definitions (fiscal year start, currency, what counts
   as an active customer) that the chatbot should apply automatically?
 
@@ -119,4 +159,5 @@ that matter, who uses the output.
 
 | Date | Change |
 |---|---|
+| 2026-11-16 | Branch `claude/story-cards`: five-card story (What, Who, When, Which, How) as the main screen, subject picker, one-click tidy, period and filter controls, copy summary, print briefing. Existing tools moved behind "Explore further". Sample targets made realistic. |
 | 2026-11-15 | First version: file import with preview, data check with one-click fixes, join suggestions, chatbot, table and chart builder, machine learning tab, sample data, this file. |

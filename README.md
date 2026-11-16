@@ -5,6 +5,17 @@ what was found, then ask questions, build tables and charts, and run predictions
 
 Everything runs inside the browser tab. Uploaded files are never sent anywhere.
 
+## This branch: the five-card story
+
+`claude/story-cards` replaces the dashboard with a story. After a file is dropped and
+confirmed, you choose what you want to understand, and the page shows five cards:
+**What**, **Who**, **When**, **Which**, **How**. Each opens to a sentence, then a chart,
+then a table. The story can be narrowed with one filter, copied as text, or printed as a
+briefing. The chatbot, table builder, predictions and data check are behind
+**Explore further**.
+
+To see this branch live, choose `claude/story-cards` as the branch in the Pages settings below.
+
 ## Open the app
 
 Turn on GitHub Pages once (no terminal needed):

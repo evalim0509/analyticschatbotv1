@@ -108,7 +108,7 @@ for t in [
 d.add_heading("Regional sales targets for 2025", 1)
 t = d.add_table(rows=1, cols=3); t.style = "Table Grid"
 for c, h in zip(t.rows[0].cells, ["Region", "Sales Target 2025", "Regional Manager"]): c.text = h
-for row in [("North", "720000", "Daniel Okafor"), ("South", "520000", "Mei Lin Tan"), ("East", "480000", "Arjun Mehta"), ("West", "680000", "Sofia Alvarez")]:
+for row in [("North", "215000", "Daniel Okafor"), ("South", "190000", "Mei Lin Tan"), ("East", "165000", "Arjun Mehta"), ("West", "240000", "Sofia Alvarez")]:
     for c, v in zip(t.add_row().cells, row): c.text = v
 d.save(OUT / "q3_business_review.docx")
 

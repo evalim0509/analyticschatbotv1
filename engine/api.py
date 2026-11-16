@@ -1,7 +1,7 @@
 """The only door between the web page and the Python engine.
 The page sends a function name and JSON; it gets JSON back."""
 import json, math, traceback
-from . import store, ingest, quality, joins, builder, chat, ml
+from . import store, ingest, quality, joins, builder, chat, ml, story
 
 
 def state():
@@ -112,6 +112,19 @@ def ml_run(kind, spec):
 
 def ml_predict(result, inputs):
     return ml.predict_one(result, inputs)
+
+
+def story_options():
+    return {"options": story.options(), "tidy": story.tidy_status()}
+
+
+def story_tidy():
+    done = story.tidy_all()
+    return {"done": done, "state": state(), "options": story.options(), "tidy": story.tidy_status()}
+
+
+def story_build(spec):
+    return story.build(spec)
 
 
 def set_glossary(entries):

@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval' 'unsafe-eval'; connect-src 'self' https://cdn.jsdelivr.net; worker-src 'self' blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'">
-<title>Plainly — ask your files</title>
+<title>Plainly — the story in your data</title>
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 <header class="top">
   <a class="brand" href="./" aria-label="Plainly, start page"><span class="mark" aria-hidden="true"></span>Plainly</a>
   <nav class="tabs" id="tabs" hidden aria-label="Sections">
+    <button data-view="story">Story</button>
     <button data-view="data">Your data</button>
     <button data-view="ask">Ask</button>
     <button data-view="build">Tables &amp; charts</button>
@@ -21,6 +22,7 @@
       <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 0 0-4 0v2Z" fill="currentColor"/></svg>
       Files stay on this computer</span>
     <button class="ghost" id="wordsBtn" hidden>Business words</button>
+    <button class="ghost" id="exploreBtn" hidden>Explore further</button>
     <button class="ghost" id="addBtn" hidden>Add files</button>
   </div>
 </header>
@@ -29,7 +31,7 @@
   <section id="welcome" class="welcome">
     <div class="drop" id="drop" tabindex="0" role="button" aria-label="Drop a file here, or press Enter to choose files">
       <h1>Drop a file to begin</h1>
-      <p class="lede">Excel, CSV, Word, PowerPoint or PDF. I'll read it, show you what I found, and you decide what to keep.</p>
+      <p class="lede">Excel, CSV, Word, PowerPoint or PDF. I'll read it and tell you the story in five steps: what, who, when, which and how.</p>
       <div class="drop-actions">
         <button class="primary" id="chooseBtn">Choose files</button>
         <button class="secondary" id="sampleBtn">Try it with sample data</button>
@@ -37,11 +39,13 @@
       <p class="engine" id="engineStatus" role="status">Getting ready…</p>
     </div>
     <ul class="promises">
-      <li><strong>Ask in your own words.</strong> Answers come only from your files, and each one shows how it was worked out.</li>
-      <li><strong>Build tables and charts by dragging.</strong> No formulas, no code, export when you are done.</li>
-      <li><strong>See what is likely next.</strong> Forecasts and predictions explained in plain English, with how far to trust them.</li>
+      <li><strong>Five cards, in order.</strong> What happened, who is behind it, when, which ones matter, and how to respond.</li>
+      <li><strong>A sentence before a chart.</strong> Each card opens to the finding in words, then the chart, then the figures.</li>
+      <li><strong>Only your files.</strong> Every finding shows how it was worked out. Nothing is guessed, nothing leaves this computer.</li>
     </ul>
   </section>
+  <section id="view-pick" class="story" hidden></section>
+  <section id="view-story" class="story" hidden></section>
   <section id="view-data" class="view" hidden></section>
   <section id="view-ask" class="view" hidden></section>
   <section id="view-build" class="view" hidden></section>

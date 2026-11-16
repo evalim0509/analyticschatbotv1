@@ -35,7 +35,7 @@ function renderTable(columns, rows, types, opts = {}) {
   const isNum = (i) => types ? types[i] === "number" : rows.some((r) => typeof r[i] === "number");
   const nums = columns.map((_, i) => isNum(i));
   const cell = (v, i) => v === null || v === undefined || v === ""
-    ? h("td", { class: "blank" }, "blank")
+    ? h("td", { class: "blank" + (nums[i] ? " num" : "") }, opts.dash ? "–" : "blank")
     : h("td", { class: (nums[i] ? "num" : "") + (opts.wrap === i ? " wrap" : ""), title: typeof v === "string" && v.length > 40 ? v : null },
         columns[i] === "Row in file" ? String(v) : fmtNum(v));
   return h("div", { class: "table-wrap" }, h("table", {},
@@ -106,9 +106,15 @@ function setState(st) {
 function show(view) {
   S.view = view;
   $("welcome").hidden = view !== "welcome";
-  for (const v of ["data", "ask", "build", "predict"]) $("view-" + v).hidden = v !== view;
+  if (view === "story" && !S.story) view = S.view = "pick";
+  for (const v of ["pick", "story", "data", "ask", "build", "predict"]) $("view-" + v).hidden = v !== view;
   const has = !!S.state;
-  $("tabs").hidden = $("wordsBtn").hidden = $("addBtn").hidden = !has;
+  if (["data", "ask", "build", "predict"].includes(view)) S.explore = true;
+  $("addBtn").hidden = $("exploreBtn").hidden = !has;
+  $("tabs").hidden = $("wordsBtn").hidden = !(has && S.explore);
+  $("exploreBtn").textContent = S.explore ? "Hide tools" : "Explore further";
+  if (view === "pick") renderPick();
+  if (view === "story") renderStory();
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-current", b.dataset.view === view ? "page" : "false"));
   if (view === "data") renderData();
   if (view === "ask") renderAsk();
@@ -117,6 +123,7 @@ function show(view) {
   window.scrollTo(0, 0);
 }
 document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
+$("exploreBtn").addEventListener("click", () => { S.explore = !S.explore; show(S.explore ? S.view : (S.story ? "story" : "pick")); });
 
 // ---------------------------------------------------------------- business words (the second brain's glossary)
 let brainWords = [];
@@ -257,8 +264,8 @@ function showPreview(previews) {
     S.checks = {};
     setState(st);
     S.current = (st.datasets.find((d) => d.health && d.health.to_review) || st.datasets[0] || {}).id || null;
-    show(st.datasets.length ? "data" : "ask");
-    toast("Imported. Have a look at what I found.");
+    S.story = null; S.pick = null;
+    show(st.datasets.length ? "pick" : "ask");
   });
   openModal(h("div", { class: "sheet" },
     h("header", {}, h("h2", {}, "Here is what I found"), h("p", { class: "sub" }, "Check it looks right. Untick anything you do not want, rename tables if you like, then import.")),
@@ -288,7 +295,7 @@ async function renderData() {
 
   const head = h("div", { class: "card pad" },
     h("div", { class: "row" }, h("h3", { style: "font-size:20px" }, ds.name), h("span", { class: "muted grow" }, ds.kind === "linked" ? "Combined table" : `from ${ds.source}${ds.where ? ", " + ds.where : ""}`),
-      h("button", { class: "primary", onclick: () => show("ask") }, "Start asking questions")),
+      h("button", { class: "primary", onclick: () => { S.pick = null; show("story"); } }, "Back to the story")),
     h("div", { class: "stats", style: "margin-top:14px" },
       h("div", { class: "stat" }, h("b", {}, fmtNum(ds.rows)), h("span", {}, "rows")),
       h("div", { class: "stat" }, h("b", {}, ds.columns.length), h("span", {}, "fields")),
@@ -698,4 +705,109 @@ async function askAboutPrediction(r) {
   addMessage(h("div", {}, "Explain this result: " + r.title), "you");
   const wait = addMessage(h("div", { class: "card answer muted" }, h("span", { class: "spinner" }), "Reading the result…"), "bot");
   wait.replaceChildren(renderAnswer(await call("ask_about_ml", { result: r.id })));
+}
+
+// ---------------------------------------------------------------- The story: choose a subject, then five cards
+async function renderPick() {
+  const root = $("view-pick");
+  if (!S.pick) {
+    root.replaceChildren(h("p", { class: "muted" }, h("span", { class: "spinner" }), "Reading your data…"));
+    S.pick = await call("story_options");
+  }
+  const { options, tidy } = S.pick;
+  if (S.view !== "pick") return;
+  const choose = (o) => { S.story = { spec: { dataset: o.dataset, value: o.value }, open: "what" }; show("story"); };
+  const tidyBox = tidy.fixes || tidy.links ? h("div", { class: "tidy" },
+    h("p", {}, h("strong", {}, "Before you start. "),
+      [tidy.fixes ? `I found ${plural(tidy.fixes, "safe fix")} (such as repeated rows)` : null, tidy.links ? `${plural(tidy.links, "pair")} of tables that belong together` : null].filter(Boolean).join(" and ") +
+      ". Applying them makes the story more accurate. Your original files are not changed."),
+    h("div", { class: "row" },
+      h("button", { class: "primary", onclick: async (e) => {
+        e.target.disabled = true; e.target.textContent = "Applying…";
+        const r = await call("story_tidy");
+        S.checks = {}; setState(r.state); S.pick = { options: r.options, tidy: r.tidy };
+        toast(`${plural(r.done.length, "change")} applied.`); renderPick();
+      } }, "Apply them all"),
+      h("button", { class: "secondary", onclick: () => show("data") }, "Let me review them")))
+    : tidy.to_review ? h("p", { class: "caution" }, `${plural(tidy.to_review, "item")} in your data still need${tidy.to_review === 1 ? "s" : ""} a human look, such as unusually large values. `,
+        h("button", { class: "link", onclick: () => show("data") }, "Review them")) : null;
+  root.replaceChildren(
+    h("h1", { class: "ask-big" }, "What do you want to understand?"),
+    options.length ? h("p", { class: "frame" }, "Pick one. You can change it at any time.") : null,
+    options.length ? h("div", { class: "subjects" }, options.map((o) => h("button", { class: "subject", onclick: () => choose(o) }, h("b", {}, o.label), h("span", {}, o.detail))))
+      : h("p", { class: "frame" }, "I did not find a table with numbers to build a story from. Your documents are still searchable under Explore further."),
+    tidyBox);
+}
+
+async function renderStory() {
+  const root = $("view-story");
+  if (!root.children.length) root.replaceChildren(h("p", { class: "muted" }, h("span", { class: "spinner" }), "Putting the story together…"));
+  let st;
+  try { st = await call("story_build", { spec: S.story.spec }); } catch (err) { st = { error: "Something went wrong: " + err.message }; }
+  if (S.view !== "story") return;
+  if (st.error) { root.replaceChildren(h("p", { class: "frame" }, st.error), h("button", { class: "secondary", onclick: () => show("pick") }, "Choose something else")); return; }
+  S.story.data = st;
+  const spec = S.story.spec;
+  const retell = (change) => { Object.assign(spec, change); renderStory(); };
+  const options = (S.pick || {}).options || [];
+  const subject = h("select", { "aria-label": "What the story is about", onchange: (e) => { const o = options[Number(e.target.value)]; S.story = { spec: { dataset: o.dataset, value: o.value }, open: "what" }; renderStory(); } },
+    options.map((o, i) => h("option", { value: i, selected: o.dataset === spec.dataset && o.value === spec.value }, o.label)));
+  const period = st.periods.length ? h("select", { "aria-label": "Period", onchange: (e) => retell({ period: e.target.value }) },
+    st.periods.map((p) => h("option", { value: p.key, selected: p.key === st.period }, p.label))) : null;
+  const current = st.filters[0];
+  const filter = st.filter_fields.length ? h("select", { "aria-label": "Narrow the story", onchange: (e) => {
+      const [f, v] = e.target.value ? JSON.parse(e.target.value) : [];
+      retell({ filters: f ? [{ field: f, op: "is", value: [v] }] : [] });
+    } },
+    h("option", { value: "" }, "everything"),
+    st.filter_fields.map((f) => h("optgroup", { label: f.field }, f.values.map((v) =>
+      h("option", { value: JSON.stringify([f.field, v]), selected: !!current && current.field === f.field && current.value[0] === v }, v))))) : null;
+  const caution = st.cards[4].actions.find((a) => a.link);
+  const cards = st.cards.map((c) => storyCard(c, st, retell));
+  root.replaceChildren(
+    h("p", { class: "frame controls" }, "The story of ", options.length > 1 ? subject : h("strong", {}, st.label), period ? [" in ", period] : null, filter ? [" for ", filter] : null),
+    h("div", { class: "print-title" }, h("h1", {}, st.title), h("p", {}, `Prepared ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })} from ${st.source}`)),
+    caution ? h("p", { class: "caution" }, caution.why + " ", h("button", { class: "link", onclick: () => show("data") }, "Review now")) : null,
+    h("div", { class: "scards" }, cards),
+    h("div", { class: "story-foot row" },
+      h("button", { class: "secondary", onclick: async () => {
+        try { await navigator.clipboard.writeText(st.summary); } catch { const t = h("textarea", { style: "position:fixed;opacity:0" }, st.summary); document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+        toast("Summary copied. Paste it into an email or message.");
+      } }, "Copy summary"),
+      h("button", { class: "secondary", onclick: () => window.print() }, "Print briefing"),
+      h("span", { class: "grow" }),
+      h("span", { class: "muted", style: "font-size:13px" }, "Worked out from your files only. Nothing is guessed.")));
+  openCard(S.story.open, false);
+}
+
+function openCard(key, scroll) {
+  S.story.open = key;
+  document.querySelectorAll(".scard").forEach((el) => {
+    const on = el.dataset.key === key;
+    el.classList.toggle("open", on);
+    el.querySelector(".shead").setAttribute("aria-expanded", String(on));
+    if (on) {
+      const c = S.story.data.cards.find((x) => x.key === key), canvas = el.querySelector("canvas");
+      if (canvas) requestAnimationFrame(() => (c.forecast ? drawForecast(canvas, c.forecast) : drawChart(canvas, { ...c.chart, emphasis: key === "what" ? "last" : null })));
+      if (scroll) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
+    }
+  });
+}
+
+function storyCard(c, st, retell) {
+  const body = h("div", { class: "sbody" });
+  if (c.more.length) body.append(h("p", { class: "more" }, c.more.join(" ")));
+  if (c.actions) {
+    body.append(h("ol", { class: "actions" }, c.actions.map((a) => h("li", {}, h("strong", {}, a.do), h("span", {}, a.why)))), h("p", { class: "fine" }, c.note));
+  }
+  if (c.dims && c.dims.length > 1) body.append(h("div", { class: "pills", role: "group", "aria-label": "Look at it by" }, h("span", {}, "By"),
+    c.dims.slice(0, 6).map((d) => h("button", { "aria-pressed": String(d === c.dim), onclick: () => retell({ [c.key]: d }) }, d))));
+  if (c.chart || c.forecast) body.append(h("div", { class: "chart-box" }, h("canvas", { role: "img", "aria-label": c.sentence })));
+  if (c.table && !c.empty) body.append(renderTable(c.table.columns, c.table.rows, null, { dash: true }));
+  body.append(h("details", { class: "how" }, h("summary", {}, "How I got this"), h("div", { class: "box" }, h("ol", {}, c.steps.map((s) => h("li", {}, s))),
+    c.sql ? h("details", { style: "margin-top:12px" }, h("summary", {}, "Technical detail"), h("p", { class: "muted" }, "The main query that was run on your data, for an analyst who wants to verify it."), h("code", {}, c.sql)) : null)));
+  return h("article", { class: "scard", "data-key": c.key },
+    h("button", { class: "shead", "aria-expanded": "false", title: c.ask, onclick: () => openCard(S.story.open === c.key ? null : c.key, true) },
+      h("span", { class: "q" }, c.word), h("span", { class: "s" }, c.sentence), h("span", { class: "tog", "aria-hidden": "true" })),
+    body);
 }

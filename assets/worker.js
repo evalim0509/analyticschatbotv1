@@ -2,7 +2,7 @@
    The only downloads are the engine itself; uploaded files never leave this tab. */
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/";
 const ROOT = new URL("../", self.location.href).href;
-const ENGINE = ["__init__", "store", "ingest", "quality", "joins", "builder", "chat", "ml", "api"];
+const ENGINE = ["__init__", "store", "ingest", "quality", "joins", "builder", "chat", "ml", "story", "api"];
 const WHEELS = ["et_xmlfile-2.0.0-py3-none-any.whl", "openpyxl-3.1.5-py2.py3-none-any.whl", "pypdf-7.1.0-py3-none-any.whl"];
 importScripts(PYODIDE + "pyodide.js");
 
