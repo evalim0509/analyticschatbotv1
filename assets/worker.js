@@ -2,8 +2,8 @@
    The only downloads are the engine itself; uploaded files never leave this tab. */
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/";
 const ROOT = new URL("../", self.location.href).href;
-const ENGINE = ["__init__", "store", "ingest", "quality", "joins", "builder", "chat", "ml", "story", "api"];
-const WHEELS = ["et_xmlfile-2.0.0-py3-none-any.whl", "openpyxl-3.1.5-py2.py3-none-any.whl", "pypdf-7.1.0-py3-none-any.whl"];
+// The list of engine files lives in engine/manifest.json and is always fetched fresh,
+// so an older cached copy of this loader can never load a mismatched set of files.
 importScripts(PYODIDE + "pyodide.js");
 
 let py, dispatch, mlReady;
@@ -13,10 +13,11 @@ const ready = (async () => {
   py = await loadPyodide({ indexURL: PYODIDE });
   self.postMessage({ status: "Loading the calculation engine…" });
   await py.loadPackage(["numpy", "sqlite3", "xlrd"]);
-  await py.loadPackage(WHEELS.map((w) => ROOT + "vendor/" + w));
+  const manifest = await (await fetch(ROOT + "engine/manifest.json", { cache: "no-store" })).json();
+  await py.loadPackage(manifest.wheels.map((w) => ROOT + "vendor/" + w));
   py.FS.mkdirTree("/home/pyodide/engine");
-  await Promise.all(ENGINE.map(async (m) => {
-    const res = await fetch(`${ROOT}engine/${m}.py`, { cache: "no-cache" });
+  await Promise.all(manifest.modules.map(async (m) => {
+    const res = await fetch(`${ROOT}engine/${m}.py?v=${manifest.version}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Could not load engine/" + m + ".py");
     py.FS.writeFile(`/home/pyodide/engine/${m}.py`, await res.text());
   }));

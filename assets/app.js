@@ -54,7 +54,7 @@ function downloadCsv(name, columns, rows) {
 }
 
 // ---------------------------------------------------------------- the engine
-const worker = new Worker("assets/worker.js");
+const worker = new Worker("assets/worker.js?v=2026-11-16.2");
 const waiting = new Map();
 let seq = 0, engineReady = false;
 worker.onmessage = (e) => {
@@ -66,7 +66,11 @@ worker.onmessage = (e) => {
       el.textContent = "Ready. Everything runs inside this browser tab."; el.className = "engine ready";
       sendGlossary();
     } else if (m.status === "failed") {
-      el.textContent = "The engine could not start. Check your internet connection and reload the page. (" + m.error + ")"; el.className = "engine failed";
+      const stale = /ImportError|Could not load engine|cannot import/.test(m.error);
+      el.replaceChildren(stale ? "The app was updated while this tab was open. " : "The engine could not start. Check your internet connection. ",
+        h("button", { class: "link", onclick: (e) => { e.stopPropagation(); location.reload(); } }, "Reload the page"),
+        h("span", { title: m.error }, stale ? "" : " (details: " + String(m.error).slice(-160) + ")"));
+      el.className = "engine failed";
     } else if (m.status !== "ml-ready") el.textContent = m.status;
     return;
   }
